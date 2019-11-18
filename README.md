@@ -1,7 +1,7 @@
-# V-Net Tensorflow
+# V-Net
 Tensorflow implementation of the V-Net architecture for medical imaging segmentation.
 
-## Tensorflow implementation of V-Net
+## Tensorflow Implementation of V-Net
 This is a Tensorflow implementation of the [V-Net](https://arxiv.org/abs/1606.04797) architecture used for 3D medical imaging segmentation. This code adopts the tensorflow graph from https://github.com/MiguelMonteiro/VNet-Tensorflow. The repository covers training, evaluation and prediction modules for the (multimodal) 3D medical image segmentation in multiple classes.
 
 ### Visual Represetation of Network
@@ -9,6 +9,7 @@ Here is an example graph of network this code implements. Channel depth may chan
 ![VNetDiagram](VNetDiagram.png)
 
 ### Features
+
 - 3D data processing ready
 - Augumented patching technique, requires less image input for training
 - Multichannel input and multiclass output
@@ -30,7 +31,7 @@ Here is an example graph of network this code implements. Channel depth may chan
 
 ## Usage
 ### Required Libraries
-Known good dependencies
+
 - Python 3.5
 - Tensorflow 1.8 or above
 - Nibabel
