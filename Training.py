@@ -295,7 +295,7 @@ with tf.Graph().as_default():
             train, summary = sess.run([train_op, summary_op], feed_dict={images_placeholder: image, labels_placeholder: label})
             train_summary_writer.add_summary(summary, global_step=tf.train.global_step(sess, global_step))
 
-            if (epoch % f.test_each) == 0:
+            if ((epoch+1) % f.test_each) == 0:
 
                 batches = test_data.get_volume_batch_generators()
 
