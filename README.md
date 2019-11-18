@@ -102,6 +102,9 @@ Available training parameters
   --p: Padding size.
     (default: [5, 5, 5])
     (list of integers)
+  --params: List of data augmentation methods with settings (['method', setting]), e.g. ['mirror', [0,1,2]].
+    (default: None)
+    (list of strings)
   --drop_out: DropOut probability.
     (default: 0.5)
     (float)
@@ -138,57 +141,8 @@ Available training parameters
 What the class does is basically random sampling within a image volume with provided size and padding. To this volume subsample, Gaussian-filtering can be applied and the original images together with the Gaussian-filtered versions are stacked in the channel dimension. Next, transformation are applied, if requested. The output is a tensor of shape (batch_size, nx, ny, nz, n_channels). Same holds for the masks. In addition, it is possible to selectively sample, i.e. that each n-th sample includes labelled data (by which the selectively sampled class can be determined). Read more about the inputs below.
 
 **Be aware that each class in the masks will correspond to one channel, i.e. for two classes there will be two channels (and not one).**
-
-
-#### Mandatory Inputs
-
-
-    w: subsample dimensions as list of type int and length ndims, e.g. [80, 80, 80]
-    
-    p: subsample paddings as list of type int and length ndims, e.g. [5, 5, 5]
-    
-    location: path to folders with data for training/testing of type str
-    
-    folder: folder name of type str
-    
-    featurefiles: filenames of featurefiles of tupe str as list
-    
-    maskfiles: filenames of mask file(s) to be used as reference as type str as list
-    
-    nclasses: number of classes of type int
-    
-    params: optional parameters for data augmentation
-    
-    
-##### Example
-
-To extract single subvolumes, the method random_sample is used after initiation of a data collection instance.
-
-    w = [80, 80, 80]
-    p = [5, 5, 5]
-    location = '/scicore/home/scicore/rumoke43/mdgru_experiments/files'
-    folder = 'train'
-    files = ['flair_pp.nii', 'mprage_pp.nii', 'pd_pp.nii', 't2_pp.nii']
-    mask = ['mask.nii']
-    nclasses = 2
-    
-    params = {}
-    params['each_with_labels'] = 2
-    
-    threaded_data_instance = dsc.ThreadedDataSetCollection(w, p, location, folder, files, mask, nclasses, params)
-    
-    batch, batchlabs = threaded_data_instance.random_sample()
-    
-To sample a whole volume, a separate method that generates a generator object is available. This is useful for evaluation.
-
-    batches = threaded_data_instance.get_volume_batch_generators()
-    
-    for batch, file, shape, w, p in batches:
-        for subvol, subvol_mask, imin, imax in batch:
-            ...
             
-            
-#### Optional Inputs
+#### Inputs
 
 Optional inputs can be provided as dict (see example above).
     
@@ -202,7 +156,7 @@ Optional inputs can be provided as dict (see example above).
     
     each_with_labels: input of type int to fix the selective sampling interval, i.e. each n-th sample (default: 0, i.e. off)
     
-    minlabel: input of type int to fix which label/class to selectively sample (default: 1)
+    min_label: input of type int to fix which label/class to selectively sample (default: 1)
     
 ##### Data Augmentation
 
