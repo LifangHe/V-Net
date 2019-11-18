@@ -37,4 +37,5 @@ source "/scicore/home/scicore/rumoke43/anaconda3/bin/activate" MIAC
 
 #add your command lines below
 #############################
-python3 Training.py
+python3 Training.py --data_location './files' --train_folder './train' --test_folder './test' \
+--nclasses 2 --drop_out 0.5 --epochs 100 --loss_function 'sorensen' --params ['each_with_labels', 2, 'min_label', 1]

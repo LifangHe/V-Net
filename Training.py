@@ -23,21 +23,21 @@ tf.app.flags.DEFINE_string('train_folder', './train',
     """Directory of training data.""")
 tf.app.flags.DEFINE_string('test_folder', './test',
     """Directory of training data.""")
-tf.app.flags.DEFINE_list('files',['t2_pp.nii'],
+tf.app.flags.DEFINE_list('files',['t2_pp.nii','pd_pp.nii','mprage_pp.nii','flair_pp.nii'],
     """Image filenames""")
 tf.app.flags.DEFINE_list('masks',['mask.nii'],
     """Label filenames""")
 tf.app.flags.DEFINE_integer('nclasses',2,
     """Label filenames""")
 tf.app.flags.DEFINE_list('params',[],
-    """Data augmentation parameters""")
-tf.app.flags.DEFINE_float('drop_out',1,
+    """Data augmentation parameters. First method, then parameter, e.g. --params ['param', 'value']""")
+tf.app.flags.DEFINE_float('drop_out',0.5,
     """Probabiliy for DropOut""")               
 tf.app.flags.DEFINE_multi_integer('w',[80,80,80],
     """Size of a subvolume""")
 tf.app.flags.DEFINE_multi_integer('p',[5,5,5],
     """Padding of a subvolume""")
-tf.app.flags.DEFINE_integer('epochs',10,
+tf.app.flags.DEFINE_integer('epochs',10000,
     """Number of epochs for training""")
 tf.app.flags.DEFINE_string('log_dir', './tmp/log',
     """Directory where to write training and testing event logs """)
@@ -47,21 +47,21 @@ tf.app.flags.DEFINE_float('decay_factor',0.01,
     """Exponential decay learning rate factor""")
 tf.app.flags.DEFINE_integer('decay_steps',100,
     """Number of epoch before applying one learning rate decay""")
-tf.app.flags.DEFINE_integer('display_step',10,
+tf.app.flags.DEFINE_integer('display_step',1000,
     """Display and logging interval (train steps)""")
-tf.app.flags.DEFINE_integer('save_interval',1,
+tf.app.flags.DEFINE_integer('save_interval',1000,
     """Checkpoint save interval (epochs)""")
 tf.app.flags.DEFINE_string('checkpoint_dir', './tmp/ckpt',
     """Directory where to write checkpoint""")
 tf.app.flags.DEFINE_string('model_dir','./tmp/model',
     """Directory to save model""")
-tf.app.flags.DEFINE_bool('restore_training',True,
+tf.app.flags.DEFINE_bool('restore_training',False,
     """Restore training from last checkpoint""")
 tf.app.flags.DEFINE_integer('shuffle_buffer_size',5,
     """Number of elements used in shuffle buffer""")
 tf.app.flags.DEFINE_string('loss_function','sorensen',
-    """Loss function used in optimization (xent, weight_xent, sorensen, jaccard)""")
-tf.app.flags.DEFINE_string('optimizer','sgd',
+    """Loss function used in optimization (xent, sorensen, jaccard)""")
+tf.app.flags.DEFINE_string('optimizer','adam',
     """Optimization method (sgd, adam, momentum, nesterov_momentum)""")
 tf.app.flags.DEFINE_float('momentum',0.5,
     """Momentum used in optimization""")
