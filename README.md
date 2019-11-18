@@ -221,25 +221,6 @@ Once TensorBoard is running, navigate your web browser to ```localhost:6006``` t
 
 Note: ```localhost``` may need to change to localhost name by your own in newer version of Tensorboard.
 
-### Evaluation
-To evaluate image data, first place the data in folder ```./data/evaluate```. Each image data should be placed in separate folder as indicated in the folder hierarchy
-
-There are several parameters you need to set in order manually
-- `model_path`, the default path is at `./tmp/ckpt/checkpoint-<global_step>.meta`
-- `checkpoint_dir`, the default path is at `./tmp/ckpt`
-- `patch_size`, this value need to be same as the one used in training
-- `patch_layer`, this value need to be same as the one used in training
-- `stride_inplane`, this value should be <= `patch_size`
-- `stride_layer`, this value should be <= `patch_layer`
-- `batch_size`, currently only support single batch processing
-
-Run `evaluate.py` after you have modified the corresponding variables. All data in `./data/evaluate` will be iterated. Segmented label is named as `label_vnet.nii.gz` in same folder of the respective `img.nii.gz`.
-
-You may change output label name by changing the line `writer.SetFileName(os.path.join(FLAGS.data_dir,case,'label_vnet.nii.gz'))`
-
-Note that you should keep preprocessing pipeline similar to the one in `train.py`, but without random cropping and noise.
-
-
 ## References
 Use the following Bibtex if you need to cite this repository:
 ```bibtex
