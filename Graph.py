@@ -17,5 +17,4 @@ with tf.Session() as sess:
 		tensor = tf.constant(variable.eval())
 		tf.assign(variable, tensor, name="nWeights")
 
-	# tf.train.write_graph(sess.graph.as_graph_def(), "D:/projects/Deep_Learning/tensorflow/vnet-tensorflow/tmp/", "graph_ascii.pb")
-	tf.train.write_graph(sess.graph.as_graph_def(), "D:/projects/Deep_Learning/tensorflow/vnet-tensorflow/tmp/", "graph.pb",as_text=False)
+	tf.train.write_graph(sess.graph.as_graph_def(), "./tmp/", "graph.pb",as_text=False)
