@@ -25,7 +25,7 @@ Here is an example graph of network this code implements. Channel depth may chan
 - [x] Resume training from checkpoint
 - [x] Epoch training
 - [x] Evaluation from single data
-- [ ] Multichannel input
+- [x] Multichannel input
 - [x] Multiclass output
 - [x] C++ inference
 
