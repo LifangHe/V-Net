@@ -78,13 +78,38 @@ You may run Training.py with commandline arguments. To check usage, type ```pyth
 
 Available training parameters
 ```console
-  --batch_size: Size of batch
-    (default: '1')
-    (an integer)
+  --data_location: Relative location of data folder insider working directory.
+    (default: './files')
+    (string)
+  --train_folder: Directory of training data.
+    (default: './train')
+    (string)
+  --test_folder: Directory of test data.
+    (default: './test')
+    (string)
+  --files: Name of files to include.
+    (default: ['t2_pp.nii','pd_pp.nii','mprage_pp.nii','flair_pp.nii'])
+    (list of strings)
+  --masks: Name of masks to include.
+    (default: ['mask.nii'])
+    (list of strings)
+  --nclasses: Number of classes.
+    (default: 2)
+    (integer)
+  --w: Subvolume size.
+    (default: [80, 80, 80])
+    (list of integers)
+  --p: Padding size.
+    (default: [5, 5, 5])
+    (list of integers)
+  --drop_out: DropOut probability.
+    (default: 0.5)
+    (float)
+  --test_each: Validation frequency in epochs.
+    (default: 2000)
+    (integer)
   --checkpoint_dir: Directory where to write checkpoint
     (default: './tmp/ckpt')
-  --data_dir: Directory of stored data.
-    (default: './data')
   --decay_factor: Exponential decay learning rate factor
     (default: '0.01')
     (a number) (not implemented)
@@ -92,38 +117,20 @@ Available training parameters
     (default: '100')
     (an integer) (not implemented)
   --display_step: Display and logging interval (train steps)
-    (default: '10')
-    (an integer)
-  --drop_ratio: Probability to drop a cropped area if the label is empty. All
-    empty patches will be droped for 0 and accept all cropped patches if set to
-    1
-    (default: '0.5')
-    (a number)
+    (default: '1000')
+    (integer)
   --epochs: Number of epochs for training
-    (default: '2000')
-    (an integer)
+    (default: '10000')
+    (integer)
   --init_learning_rate: Initial learning rate
     (default: '0.1')
-    (a number)
-  --min_pixel: Minimum non-zero pixels in the cropped label
-    (default: '10')
-    (an integer)
-  --patch_layer: Number of layers in data patch
-    (default: '128')
-    (an integer)
-  --patch_size: Size of a data patch
-    (default: '128')
-    (an integer)
+    (float)
   --save_interval: Checkpoint save interval (epochs)
-    (default: '1')
-    (an integer)
+    (default: '1000')
+    (integer)
   --shuffle_buffer_size: Number of elements used in shuffle buffer
     (default: '5')
-    (an integer)
-  --tensorboard_dir: Directory where to write tensorboard summary
-    (default: './tmp/tensorboard') (deprecated)
-  --train_dir: Directory where to write training event logs
-    (default: './tmp/train_log') (deprecated)
+    (integer)
  ```
 
 ### Data Sampling

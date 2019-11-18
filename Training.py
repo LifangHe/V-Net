@@ -61,7 +61,7 @@ tf.app.flags.DEFINE_bool('restore_training',False,
     """Restore training from last checkpoint""")
 tf.app.flags.DEFINE_integer('shuffle_buffer_size',5,
     """Number of elements used in shuffle buffer""")
-tf.app.flags.DEFINE_string('loss_function','sorensen',
+tf.app.flags.DEFINE_string('loss_function','jaccard',
     """Loss function used in optimization (xent, sorensen, jaccard)""")
 tf.app.flags.DEFINE_string('optimizer','adam',
     """Optimization method (sgd, adam, momentum, nesterov_momentum)""")
