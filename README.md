@@ -34,7 +34,7 @@ Here is an example graph of network this code implements. Channel depth may chan
 Known good dependencies
 - Python 3.6
 - Tensorflow 1.5 or above
-- SimpleITK
+- Nibabel
 
 ### Folder Hierarchy
 All training, testing and evaluation data should put in `./data`
