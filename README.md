@@ -111,6 +111,12 @@ Available training parameters
   --drop_out: DropOut probability.
     (default: 0.5)
     (float)
+  --loss_function: Objective function to optimize ('xent', 'sorensen', 'jaccard')
+    (default: 'jaccard')
+    (string)
+  --optimizer: Optimizer ('sgd', 'adam', 'momentum', 'nesterov_momentum').
+    (default: 'adam')
+    (string)
   --test_each: Validation frequency in epochs.
     (default: 2000)
     (integer)
