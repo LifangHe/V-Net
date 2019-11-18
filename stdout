@@ -1,0 +1,29 @@
+2019-11-18 10:24:45.470950: I tensorflow/core/platform/cpu_feature_guard.cc:140] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
+2019-11-18 10:24:48.197975: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1356] Found device 0 with properties: 
+name: TITAN Xp major: 6 minor: 1 memoryClockRate(GHz): 1.582
+pciBusID: 0000:83:00.0
+totalMemory: 11.91GiB freeMemory: 11.75GiB
+2019-11-18 10:24:48.199370: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1435] Adding visible gpu devices: 0
+2019-11-18 10:24:52.622008: I tensorflow/core/common_runtime/gpu/gpu_device.cc:923] Device interconnect StreamExecutor with strength 1 edge matrix:
+2019-11-18 10:24:52.622121: I tensorflow/core/common_runtime/gpu/gpu_device.cc:929]      0 
+2019-11-18 10:24:52.622155: I tensorflow/core/common_runtime/gpu/gpu_device.cc:942] 0:   N 
+2019-11-18 10:24:52.625558: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1053] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 11374 MB memory) -> physical GPU (device: 0, name: TITAN Xp, pci bus id: 0000:83:00.0, compute capability: 6.1)
+/scicore/home/scicore/rumoke43/anaconda3/envs/MIAC/lib/python3.5/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+Setting up Saver...
+2019-11-18 10:24:55.334242: Start training...
+2019-11-18 10:25:00.223758: Last checkpoint epoch: 0
+2019-11-18 10:25:00.297140: Last checkpoint global step: 0
+2019-11-18 10:25:00.353398: Epoch 1 starts
+2019-11-18 10:25:11.756535: Epoch 2 starts
+2019-11-18 10:25:12.071730: Epoch 3 starts
+2019-11-18 10:25:12.366820: Epoch 4 starts
+2019-11-18 10:25:12.682841: Epoch 5 starts
+2019-11-18 10:25:12.975660: Epoch 6 starts
+2019-11-18 10:25:13.284756: Epoch 7 starts
+2019-11-18 10:25:13.579902: Epoch 8 starts
+2019-11-18 10:25:13.896090: Epoch 9 starts
+2019-11-18 10:25:14.194538: Epoch 10 starts
+2019-11-18 10:25:14.607476: Saving checkpoint of epoch 10 at ./tmp/ckpt...
+2019-11-18 10:25:16.113648: Saving checkpoint succeed
+2019-11-18 10:25:16.113703: Training of epoch 10 finishes, testing start
