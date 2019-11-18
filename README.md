@@ -144,7 +144,7 @@ What the class does is basically random sampling within a image volume with prov
             
 #### Inputs
 
-Optional inputs can be provided as dict (see example above).
+Optional params inputs can be provided as list.
     
 ##### Sampling
 
@@ -181,37 +181,3 @@ tensorboard --logdir=./tmp/log
 Once TensorBoard is running, navigate your web browser to ```localhost:6006``` to view the TensorBoard.
 
 Note: ```localhost``` may need to change to localhost name by your own in newer version of Tensorboard.
-
-## References
-Use the following Bibtex if you need to cite this repository:
-```bibtex
-@misc{jackyko1991_vnet_tensorflow,
-  author = {Jacky KL Ko},
-  title = {Implementation of vnet in tensorflow for medical image segmentation},
-  howpublished = {\url{https://github.com/jackyko1991/vnet-tensorflow}},
-  year = {2018},
-  publisher={Github},
-  journal={GitHub repository},
-}
-
-@inproceedings{milletari2016v,
-  title={V-net: Fully convolutional neural networks for volumetric medical image segmentation},
-  author={Milletari, Fausto and Navab, Nassir and Ahmadi, Seyed-Ahmad},
-  booktitle={3D Vision (3DV), 2016 Fourth International Conference on},
-  pages={565--571},
-  year={2016},
-  organization={IEEE}
-}
-
-@misc{MiguelMonteiro_VNet_Tensorflow,
-  author = {Miguel Monteiro},
-  title = {VNet-Tensorflow: Tensorflow implementation of the V-Net architecture for medical imaging segmentation.},
-  howpublished = {\url{https://github.com/MiguelMonteiro/VNet-Tensorflow}},
-  year = {2018},
-  publisher={Github},
-  journal={GitHub repository},
-}
-```
-
-## Author
-Georgi Tancev
