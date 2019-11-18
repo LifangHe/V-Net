@@ -27,12 +27,11 @@ Here is an example graph of network this code implements. Channel depth may chan
 - [x] Evaluation from single data
 - [x] Multichannel input
 - [x] Multiclass output
-- [x] C++ inference
 
 ## Usage
 ### Required Libraries
 Known good dependencies
-- Python 3.6
+- Python 3.5
 - Tensorflow 1.5 or above
 - Nibabel
 
@@ -67,15 +66,15 @@ All training, testing and evaluation data should put in `./data`
 If you wish to use image and label with filename other than `img.nii.gz` and `label.nii.gz`, please change the following values in `train.py`
 
 ```python
-image_filename = 'img.nii.gz'
-label_filename = 'label.nii.gz'
+image_filename = 'img.nii(.gz)'
+label_filename = 'label.nii(.gz)'
 ```
 
 In segmentation tasks, image and label are always in pair, missing either one would terminate the training process.
 
 ### Training
 
-You may run train.py with commandline arguments. To check usage, type ```python train.py -h``` in terminal to list all possible training parameters.
+You may run Training.py with commandline arguments. To check usage, type ```python Training.py -h``` in terminal to list all possible training parameters.
 
 Available training parameters
 ```console
@@ -127,48 +126,90 @@ Available training parameters
     (default: './tmp/train_log') (deprecated)
  ```
 
-#### Image batch preparation
-Typically medical image is large in size when comparing with natural images (height x width x layers x modality), where number of layers could up to hundred or thousands of slices. Also medical images are not bounded to unsigned char pixel type but accepts short, double or even float pixel type. This will consume large amount of GPU memories, which is a great barrier limiting the application of neural network in medical field.
+### Data Sampling
 
-Here we introduce serveral data augmentation skills that allow users to normalize and resample medical images in 3D sense. In `train.py`, you can access to `trainTransforms`/`testTransforms`. For general purpose we combine the advantage of tensorflow dataset api and SimpleITK (SITK) image processing toolkit together. Following is the preprocessing pipeline in SITK side to facilitate image augmentation with limited available memories.
+What the class does is basically random sampling within a image volume with provided size and padding. To this volume subsample, Gaussian-filtering can be applied and the original images together with the Gaussian-filtered versions are stacked in the channel dimension. Next, transformation are applied, if requested. The output is a tensor of shape (batch_size, nx, ny, nz, n_channels). Same holds for the masks. In addition, it is possible to selectively sample, i.e. that each n-th sample includes labelled data (by which the selectively sampled class can be determined). Read more about the inputs below.
 
-1. Image Normalization (fit to 0-255)
-2. Isotropic Resampling (adjustable size, in mm)
-3. Gadding (allow input image batch smaller than network input size to be trained)
-4. Random Crop (randomly select a zone in the 3D medical image in exact size as network input)
-5. Gaussian Noise
+**Be aware that each class in the masks will correspond to one channel, i.e. for two classes there will be two channels (and not one).**
 
-The preprocessing pipeline can easily be adjusted with following example code in `train.py`:
-```python
-trainTransforms = [
-                NiftiDataset.Normalization(),
-                NiftiDataset.Resample(0.4356),
-                NiftiDataset.Padding((FLAGS.patch_size, FLAGS.patch_size, FLAGS.patch_layer)),
-                NiftiDataset.RandomCrop((FLAGS.patch_size, FLAGS.patch_size, FLAGS.patch_layer),FLAGS.drop_ratio,FLAGS.min_pixel),
-                NiftiDataset.RandomNoise()
-                ]
-```
 
-To write you own preprocessing pipeline, you need to modify the preprocessing classes in `NiftiDataset.py`
+#### Mandatory Inputs
 
-Additional preprocessing classes:
-- StatisticalNormalization
-- Reorient (take care on the direction when performing evaluation)
-- Invert
-- ConfidenceCrop (for very small volume like cerebral microbleeds, alternative of RandomCrop)
-- Deformations:
-  The deformations are following SITK deep learning data augmentation documentations, will be expand soon.
-  Now contains:
-  - BSplineDeformation 
 
-  **Hint: Directly apply deformation is slow. Instead you can first perform cropping with a larger than patch size region then with deformation, then crop to actual patch size. If you apply deformation to exact training size region, it will create black zone which may affect final training accuracy.**
-  
-  Example:
-  ```python
-  NiftiDataset.ConfidenceCrop((FLAGS.patch_size*2, FLAGS.patch_size*2, FLAGS.patch_layer*2),(0.0001,0.0001,0.0001)),
-  NiftiDataset.BSplineDeformation(),
-  NiftiDataset.ConfidenceCrop((FLAGS.patch_size, FLAGS.patch_size, FLAGS.patch_layer),(0.5,0.5,0.25)),
-  ```
+    w: subsample dimensions as list of type int and length ndims, e.g. [80, 80, 80]
+    
+    p: subsample paddings as list of type int and length ndims, e.g. [5, 5, 5]
+    
+    location: path to folders with data for training/testing of type str
+    
+    folder: folder name of type str
+    
+    featurefiles: filenames of featurefiles of tupe str as list
+    
+    maskfiles: filenames of mask file(s) to be used as reference as type str as list
+    
+    nclasses: number of classes of type int
+    
+    params: optional parameters for data augmentation
+    
+    
+##### Example
+
+To extract single subvolumes, the method random_sample is used after initiation of a data collection instance.
+
+    w = [80, 80, 80]
+    p = [5, 5, 5]
+    location = '/scicore/home/scicore/rumoke43/mdgru_experiments/files'
+    folder = 'train'
+    files = ['flair_pp.nii', 'mprage_pp.nii', 'pd_pp.nii', 't2_pp.nii']
+    mask = ['mask.nii']
+    nclasses = 2
+    
+    params = {}
+    params['each_with_labels'] = 2
+    
+    threaded_data_instance = dsc.ThreadedDataSetCollection(w, p, location, folder, files, mask, nclasses, params)
+    
+    batch, batchlabs = threaded_data_instance.random_sample()
+    
+To sample a whole volume, a separate method that generates a generator object is available. This is useful for evaluation.
+
+    batches = threaded_data_instance.get_volume_batch_generators()
+    
+    for batch, file, shape, w, p in batches:
+        for subvol, subvol_mask, imin, imax in batch:
+            ...
+            
+            
+#### Optional Inputs
+
+Optional inputs can be provided as dict (see example above).
+    
+##### Sampling
+
+    whiten: perform Gaussian-filtering of images as type bool (default: True)
+    
+    subtractGaussSigma: standard deviation for Gaussian filtering as list of len 1 or ndims (default: [5])
+    
+    nooriginal: use only Gaussian-filtered images as type bool (default: False)
+    
+    each_with_labels: input of type int to fix the selective sampling interval, i.e. each n-th sample (default: 0, i.e. off)
+    
+    minlabel: input of type int to fix which label/class to selectively sample (default: 1)
+    
+##### Data Augmentation
+
+    deform: deformation grid spacing in voxels as list of len 1 or ndims with types int (default: [0])
+    
+    deformSigma: given a deformation grid spacing, this determines the standard deviations for each dimension of the random deformation vectors as list with length 1 or ndims with types float (default: [0])
+    
+    mirror: list input of len 1 or ndims of type bool to activate random mirroring along the specified axes during training (default: [0])
+    
+    rotation: list input of len 1 or ndims of type float as amount in radians to randomly rotate the input around a randomly drawn vector (default: [0])
+    
+    scaling: list input of len 1 or ndims of type float as amount ot randomly scale images, per dimension, or for all dimensions, as a factor, e.g. 1.25 (default: [0])
+    
+    shift: list input of len 1 or ndims of type int in order to sample outside of discrete coordinates, this can be set to 1 on the relevant axes (default: [0])
   
 #### Tensorboard
 In training stage, result can be visualized via Tensorboard. Run the following command:
@@ -198,10 +239,8 @@ You may change output label name by changing the line `writer.SetFileName(os.pat
 
 Note that you should keep preprocessing pipeline similar to the one in `train.py`, but without random cropping and noise.
 
-## C++ Inference
-We provide a C++ inference example under directory [cxx](./cxx). For C++ implementation, please follow the guide [here](./cxx/README.md)
 
-## Citations
+## References
 Use the following Bibtex if you need to cite this repository:
 ```bibtex
 @misc{jackyko1991_vnet_tensorflow,
@@ -232,11 +271,5 @@ Use the following Bibtex if you need to cite this repository:
 }
 ```
 
-## References:
-- SimpleITK guide on deep learning data augmentation:
-https://simpleitk.readthedocs.io/en/master/Documentation/docs/source/fundamentalConcepts.html
-https://simpleitk.github.io/SPIE2018_COURSE/data_augmentation.pdf
-https://simpleitk.github.io/SPIE2018_COURSE/spatial_transformations.pdf
-
 ## Author
-Jacky Ko jackkykokoko@gmail.com
+Georgi Tancev
