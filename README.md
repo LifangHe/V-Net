@@ -102,6 +102,9 @@ Available training parameters
   --p: Padding size.
     (default: [5, 5, 5])
     (list of integers)
+  --epochs: Number of epochs for training
+    (default: '10000')
+    (integer)
   --params: List of data augmentation methods with settings (['method', setting]), e.g. ['mirror', [0,1,2]].
     (default: None)
     (list of strings)
@@ -121,9 +124,6 @@ Available training parameters
     (an integer) (not implemented)
   --display_step: Display and logging interval (train steps)
     (default: '1000')
-    (integer)
-  --epochs: Number of epochs for training
-    (default: '10000')
     (integer)
   --init_learning_rate: Initial learning rate
     (default: '0.1')
