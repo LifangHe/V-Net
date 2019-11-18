@@ -153,16 +153,16 @@ What the class does is basically random sampling within a image volume with prov
 Optional params inputs can be provided as list.
     
 ##### Sampling
-
-    whiten: perform Gaussian-filtering of images as type bool (default: True)
+```console
+  whiten: perform Gaussian-filtering of images as type bool (default: True)
     
-    subtractGaussSigma: standard deviation for Gaussian filtering as list of len 1 or ndims (default: [5])
+  subtractGaussSigma: standard deviation for Gaussian filtering as list of len 1 or ndims (default: [5])
     
-    nooriginal: use only Gaussian-filtered images as type bool (default: False)
+  nooriginal: use only Gaussian-filtered images as type bool (default: False)
     
-    each_with_labels: input of type int to fix the selective sampling interval, i.e. each n-th sample (default: 0, i.e. off)
+  each_with_labels: input of type int to fix the selective sampling interval, i.e. each n-th sample (default: 0, i.e. off)
     
-    min_label: input of type int to fix which label/class to selectively sample (default: 1)
+  min_label: input of type int to fix which label/class to selectively sample (default: 1)
     
 ##### Data Augmentation
 
