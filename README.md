@@ -153,6 +153,7 @@ What the class does is basically random sampling within a image volume with prov
 Optional params inputs can be provided as list.
     
 ##### Sampling
+
 ```console
   whiten: perform Gaussian-filtering of images as type bool (default: True)
     
@@ -163,21 +164,24 @@ Optional params inputs can be provided as list.
   each_with_labels: input of type int to fix the selective sampling interval, i.e. each n-th sample (default: 0, i.e. off)
     
   min_label: input of type int to fix which label/class to selectively sample (default: 1)
-    
+ ```
+
 ##### Data Augmentation
 
-    deform: deformation grid spacing in voxels as list of len 1 or ndims with types int (default: [0])
+```console
+  deform: deformation grid spacing in voxels as list of len 1 or ndims with types int (default: [0])
     
-    deformSigma: given a deformation grid spacing, this determines the standard deviations for each dimension of the random deformation vectors as list with length 1 or ndims with types float (default: [0])
+  deformSigma: given a deformation grid spacing, this determines the standard deviations for each dimension of the random deformation vectors as list with length 1 or ndims with types float (default: [0])
     
-    mirror: list input of len 1 or ndims of type bool to activate random mirroring along the specified axes during training (default: [0])
+  mirror: list input of len 1 or ndims of type bool to activate random mirroring along the specified axes during training (default: [0])
     
-    rotation: list input of len 1 or ndims of type float as amount in radians to randomly rotate the input around a randomly drawn vector (default: [0])
+  rotation: list input of len 1 or ndims of type float as amount in radians to randomly rotate the input around a randomly drawn vector (default: [0])
     
-    scaling: list input of len 1 or ndims of type float as amount ot randomly scale images, per dimension, or for all dimensions, as a factor, e.g. 1.25 (default: [0])
+  scaling: list input of len 1 or ndims of type float as amount ot randomly scale images, per dimension, or for all dimensions, as a factor, e.g. 1.25 (default: [0])
     
-    shift: list input of len 1 or ndims of type int in order to sample outside of discrete coordinates, this can be set to 1 on the relevant axes (default: [0])
-  
+  shift: list input of len 1 or ndims of type int in order to sample outside of discrete coordinates, this can be set to 1 on the relevant axes (default: [0])
+ ```
+
 #### Tensorboard
 In training stage, result can be visualized via Tensorboard. Run the following command:
 ```console
