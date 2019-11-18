@@ -1,4 +1,4 @@
-# VNet Tensorflow
+# V-Net Tensorflow
 Tensorflow implementation of the V-Net architecture for medical imaging segmentation.
 
 ## Tensorflow implementation of V-Net
@@ -12,8 +12,8 @@ Here is an example graph of network this code implements. Channel depth may chan
 - 3D data processing ready
 - Augumented patching technique, requires less image input for training
 - Multichannel input and multiclass output
-- Generic image reader with SimpleITK support (Currently only support .nii/.nii.gz format for convenience, easy to expand to DICOM, tiff and jpg format)
-- Medical image pre-post processing with SimpleITK filters
+- Generic image reader with Nibabel support (Currently only support .nii/.nii.gz format for convenience, easy to expand to DICOM, tiff and jpg format)
+- Medical image pre-post processing with Nibabel
 - Easy network replacement structure
 - Sørensen and Jaccard similarity measurement as golden standard in medical image segmentation benchmarking
 - Utilizing medical image headers to retrive space and orientation info after passthrough the network
@@ -32,8 +32,9 @@ Here is an example graph of network this code implements. Channel depth may chan
 ### Required Libraries
 Known good dependencies
 - Python 3.5
-- Tensorflow 1.5 or above
+- Tensorflow 1.8 or above
 - Nibabel
+- mvloader
 
 ### Folder Hierarchy
 All training, testing and evaluation data should put in `./data`
@@ -63,7 +64,6 @@ All training, testing and evaluation data should put in `./data`
     |   └── log                   # Tensorboard logging folder
     ├── ...
     
-If you wish to use image and label with filename other than `img.nii.gz` and `label.nii.gz`, please change the following values in `train.py`
 
 ```python
 image_filename = 'img.nii(.gz)'
