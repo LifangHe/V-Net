@@ -39,6 +39,8 @@ tf.app.flags.DEFINE_multi_integer('p',[5,5,5],
     """Padding of a subvolume""")
 tf.app.flags.DEFINE_integer('epochs',10000,
     """Number of epochs for training""")
+tf.app.flags.DEFINE_integer('test_each',1000,
+    """Test each n-th epoch.""")
 tf.app.flags.DEFINE_string('log_dir', './tmp/log',
     """Directory where to write training and testing event logs """)
 tf.app.flags.DEFINE_float('init_learning_rate',1e-2,
@@ -292,6 +294,16 @@ with tf.Graph().as_default():
             image, label = training_data.random_sample()
             train, summary = sess.run([train_op, summary_op], feed_dict={images_placeholder: image, labels_placeholder: label})
             train_summary_writer.add_summary(summary, global_step=tf.train.global_step(sess, global_step))
+
+            if (epoch % f.test_each) == 0:
+
+                batches = test_data.get_volume_batch_generators()
+
+                for batch, file, shape, w, p in batches:
+                    for image, label, imin, imax in batch:
+                        loss, summary = sess.run([loss_op, summary_op], feed_dict={images_placeholder: image, labels_placeholder: label})
+                        test_summary_writer.add_summary(summary, global_step=tf.train.global_step(sess, global_step))
+
 
         start_epoch_inc.op.run()
         # print(start_epoch.eval())
