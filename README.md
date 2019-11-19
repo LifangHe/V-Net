@@ -103,7 +103,7 @@ Available training parameters
   --p: Padding size.
     (default: [5, 5, 5])
     (list of integers)
-  --epochs: Number of epochs for training
+  --iterations: Number of iterations for training
     (default: '10000')
     (integer)
   --params: List of data augmentation methods with settings (['method', setting]), e.g. ['mirror', [0,1,2]].
@@ -118,7 +118,7 @@ Available training parameters
   --optimizer: Optimizer ('sgd', 'adam', 'momentum', 'nesterov_momentum').
     (default: 'adam')
     (string)
-  --test_each: Validation frequency in epochs.
+  --test_each: Validation frequency in iterations.
     (default: 2000)
     (integer)
   --checkpoint_dir: Directory where to write checkpoint
@@ -135,7 +135,7 @@ Available training parameters
   --init_learning_rate: Initial learning rate
     (default: '0.1')
     (float)
-  --save_interval: Checkpoint save interval (epochs)
+  --save_interval: Checkpoint save interval (iterations)
     (default: '1000')
     (integer)
   --shuffle_buffer_size: Number of elements used in shuffle buffer
