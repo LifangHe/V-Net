@@ -164,7 +164,7 @@ Optional params inputs can be provided as list.
     
   each_with_labels: input of type int to fix the selective sampling interval, i.e. each n-th sample (default: 0, i.e. off)
     
-  min_label: input of type int to fix which label/class to selectively sample (default: 1)
+  minlabel: input of type int to fix which label/class to selectively sample (default: 1)
  ```
 
 ##### Data Augmentation
