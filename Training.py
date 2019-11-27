@@ -273,8 +273,9 @@ with tf.Graph().as_default():
             # training phase
             model.is_training = True
             image, label = training_data.random_sample()
-            summary, loss = sess.run([summary_op, loss_op], feed_dict={images_placeholder: image, labels_placeholder: label})
+            train, summary, loss = sess.run([train_op, summary_op, loss_op], feed_dict={images_placeholder: image, labels_placeholder: label})
             train_summary_writer.add_summary(summary, global_step=tf.train.global_step(sess, global_step))
+            #print('{}: Training loss: {}'.format(datetime.datetime.now(), str(loss)))
 
             if ((iteration+1) % f.test_each) == 0:
 
