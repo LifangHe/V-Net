@@ -37,10 +37,10 @@ tf.app.flags.DEFINE_multi_integer('w',[80,80,80],
     """Size of a subvolume""")
 tf.app.flags.DEFINE_multi_integer('p',[5,5,5],
     """Padding of a subvolume""")
-tf.app.flags.DEFINE_integer('epochs',10000,
-    """Number of epochs for training""")
+tf.app.flags.DEFINE_integer('iterations',10,
+    """Number of iterations for training""")
 tf.app.flags.DEFINE_integer('test_each',1000,
-    """Test each n-th epoch.""")
+    """Test each n-th iteration.""")
 tf.app.flags.DEFINE_string('log_dir', './tmp/log',
     """Directory where to write training and testing event logs """)
 tf.app.flags.DEFINE_float('init_learning_rate',1e-2,
@@ -48,11 +48,11 @@ tf.app.flags.DEFINE_float('init_learning_rate',1e-2,
 tf.app.flags.DEFINE_float('decay_factor',0.01,
     """Exponential decay learning rate factor""")
 tf.app.flags.DEFINE_integer('decay_steps',100,
-    """Number of epoch before applying one learning rate decay""")
+    """Number of iterations before applying one learning rate decay""")
 tf.app.flags.DEFINE_integer('display_step',1000,
     """Display and logging interval (train steps)""")
 tf.app.flags.DEFINE_integer('save_interval',1000,
-    """Checkpoint save interval (epochs)""")
+    """Checkpoint save interval (iterations)""")
 tf.app.flags.DEFINE_string('checkpoint_dir', './tmp/ckpt',
     """Directory where to write checkpoint""")
 tf.app.flags.DEFINE_string('model_dir','./tmp/model',
@@ -93,12 +93,11 @@ def placeholder_inputs(input_batch_shape, output_batch_shape):
     return images_placeholder, labels_placeholder
 
 
-def dice_coe(output, target, loss_type='jaccard', axis=[1, 2, 3], smooth=1e-5):
+def dice_coe(output, target, loss_type='jaccard', axis=(1, 2, 3, 4), smooth=1e-5):
 
     """Soft dice (Sørensen or Jaccard) coefficient for comparing the similarity
     of two batch of data, usually be used for binary image segmentation
     i.e. labels are binary. The coefficient between 0 to 1, 1 means totally match.
-
     Parameters
     -----------
     output : Tensor
@@ -113,16 +112,13 @@ def dice_coe(output, target, loss_type='jaccard', axis=[1, 2, 3], smooth=1e-5):
         This small value will be added to the numerator and denominator.
             - If both output and target are empty, it makes sure dice is 1.
             - If either output or target are empty (all pixels are background), dice = ```smooth/(small_value + smooth)``, then if smooth is very small, dice close to 0 (even the image values lower than the threshold), so in this case, higher smooth can have a higher dice.
-
     Examples
     ---------
     >>> outputs = tl.act.pixel_wise_softmax(network.outputs)
     >>> dice_loss = 1 - tl.cost.dice_coe(outputs, y_)
-
     References
     -----------
     - `Wiki-Dice <https://en.wikipedia.org/wiki/Sørensen–Dice_coefficient>`__
-
     """
 
     inse = tf.reduce_sum(tf.multiply(output,target), axis=axis)
@@ -135,13 +131,7 @@ def dice_coe(output, target, loss_type='jaccard', axis=[1, 2, 3], smooth=1e-5):
         r = tf.reduce_sum(target, axis=axis)
     else:
         raise Exception("Unknown loss_type")
-    ## old axis=[0,1,2,3]
-    # dice = 2 * (inse) / (l + r)
-    # epsilon = 1e-5
-    # dice = tf.clip_by_value(dice, 0, 1.0-epsilon) # if all empty, dice = 1
-    ## new haodong
     dice = (tf.constant(2.0) * tf.cast(inse,dtype=tf.float32) + tf.constant(smooth)) / (tf.cast(l + r, dtype=tf.float32) + tf.constant(smooth))
-    ##
     dice = tf.reduce_mean(dice)
     return dice
 
@@ -173,40 +163,36 @@ with tf.Graph().as_default():
                 bottom_convolutions=3, # default 3
                 activation_fn="prelu") # default relu
 
-        logits = model.network_fn(images_placeholder)
+        logits = model.network_fn(images_placeholder) # (n_batches, nx, nz, nz, n_classes)
 
     with tf.name_scope("learning_rate"):
         learning_rate = f.init_learning_rate
     tf.summary.scalar('learning_rate', learning_rate)
 
 
-    with tf.name_scope("softmax"):
-        softmax_op = tf.nn.softmax(logits,name="softmax")
-
-
     with tf.name_scope("cross_entropy"):
         loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(
             logits=logits,
-            labels=labels_placeholder))
+            labels=labels_placeholder)) # (n_batches, nx, ny, nz) -> ()
     tf.summary.scalar('loss',loss_op)
 
 
     # Argmax Op to generate label from logits
     with tf.name_scope("predicted_label"):
-        pred = tf.argmax(logits, axis=4 , name="prediction")
+        pred = tf.nn.softmax(logits) # (n_batches, nx, nz, nz, n_classes)
 
 
     # Accuracy of model
     with tf.name_scope("accuracy"):
-        correct_pred = tf.equal(tf.expand_dims(pred,-1), tf.cast(labels_placeholder, dtype=tf.int64))
+        correct_pred = tf.equal(tf.cast(tf.round(pred),dtype=tf.int64), tf.cast(labels_placeholder,dtype=tf.int64))
         accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     tf.summary.scalar('accuracy', accuracy)
 
 
     # Dice Similarity, currently only for binary segmentation
     with tf.name_scope("dice"):
-        sorensen = dice_coe(softmax_op,tf.cast(tf.one_hot(labels_placeholder[:,:,:,:,0], depth=2), dtype=tf.float32), loss_type='sorensen', axis=[1,2,3,4])
-        jaccard = dice_coe(softmax_op,tf.cast(tf.one_hot(labels_placeholder[:,:,:,:,0], depth=2), dtype=tf.float32), loss_type='jaccard', axis=[1,2,3,4])
+        sorensen = dice_coe(pred,tf.cast(labels_placeholder,dtype=tf.float32), loss_type='sorensen')        
+        jaccard = dice_coe(pred,tf.cast(labels_placeholder,dtype=tf.float32), loss_type='jaccard')
         sorensen_loss = 1. - sorensen
         jaccard_loss = 1. - jaccard
     tf.summary.scalar('sorensen', sorensen)
@@ -214,6 +200,18 @@ with tf.Graph().as_default():
     tf.summary.scalar('sorensen_loss', sorensen_loss)
     tf.summary.scalar('jaccard_loss',jaccard_loss)
 
+    # Metrics
+    with tf.name_scope("metrics"):
+        tp, tp_op = tf.metrics.true_positives(labels_placeholder, pred, name="true_positives")
+        tn, tn_op = tf.metrics.true_negatives(labels_placeholder, pred, name="true_negatives")
+        fp, fp_op = tf.metrics.false_positives(labels_placeholder, pred, name="false_positives")
+        fn, fn_op = tf.metrics.false_negatives(labels_placeholder, pred, name="false_negatives")
+        sensitivity_op = tf.divide(tf.cast(tp_op,tf.float32),tf.cast(tf.add(tp_op,fn_op),tf.float32))
+        specificity_op = tf.divide(tf.cast(tn_op,tf.float32),tf.cast(tf.add(tn_op,fp_op),tf.float32))
+        dice_op = 2.*tp_op/(2.*tp_op+fp_op+fn_op)
+    tf.summary.scalar('sensitivity', sensitivity_op)
+    tf.summary.scalar('specificity', specificity_op)
+    tf.summary.scalar('dice', dice_op)
 
     # Training Op
     with tf.name_scope("training"):
@@ -248,9 +246,9 @@ with tf.Graph().as_default():
             global_step=global_step)
 
 
-    # # epoch checkpoint manipulation
-    start_epoch = tf.get_variable("start_epoch", shape=[1], initializer= tf.zeros_initializer,dtype=tf.int32)
-    start_epoch_inc = start_epoch.assign(start_epoch+1)
+    # # iteration checkpoint manipulation
+    start_iteration = tf.get_variable("start_iteration", shape=[1], initializer= tf.zeros_initializer,dtype=tf.int32)
+    start_iteration_inc = start_iteration.assign(start_iteration+1)
 
 
     # saver
@@ -268,6 +266,7 @@ with tf.Graph().as_default():
     with tf.Session(config=config) as sess:
         # Initialize all variables
         sess.run(tf.global_variables_initializer())
+        sess.run(tf.local_variables_initializer())
         print("{}: Start training...".format(datetime.datetime.now()))
 
         # summary writer for tensorboard
@@ -282,33 +281,33 @@ with tf.Graph().as_default():
                 latest_checkpoint_path = tf.train.latest_checkpoint(f.checkpoint_dir,latest_filename="checkpoint-latest")
                 saver.restore(sess, latest_checkpoint_path)
         
-        print("{}: Last checkpoint epoch: {}".format(datetime.datetime.now(),start_epoch.eval()[0]))
+        print("{}: Last checkpoint iteration: {}".format(datetime.datetime.now(),start_iteration.eval()[0]))
         print("{}: Last checkpoint global step: {}".format(datetime.datetime.now(),tf.train.global_step(sess, global_step)))
 
-        # loop over epochs
-        for epoch in np.arange(start_epoch.eval(), f.epochs):
-            print("{}: Epoch {} starts".format(datetime.datetime.now(),epoch+1))
+        # loop over iterations
+        for iteration in np.arange(start_iteration.eval(), f.iterations):
+            print("{}: iteration {} starts.".format(datetime.datetime.now(),iteration+1))
 
             # training phase
             model.is_training = True
             image, label = training_data.random_sample()
-            train, summary = sess.run([train_op, summary_op], feed_dict={images_placeholder: image, labels_placeholder: label})
+            summary, loss = sess.run([summary_op, loss_op], feed_dict={images_placeholder: image, labels_placeholder: label})
             train_summary_writer.add_summary(summary, global_step=tf.train.global_step(sess, global_step))
 
-            if ((epoch+1) % f.test_each) == 0:
+            if ((iteration+1) % f.test_each) == 0:
 
                 batches = test_data.get_volume_batch_generators()
-
+                model.is_training = False
                 for batch, file, shape, w, p in batches:
                     for image, label, imin, imax in batch:
                         loss, summary = sess.run([loss_op, summary_op], feed_dict={images_placeholder: image, labels_placeholder: label})
                         test_summary_writer.add_summary(summary, global_step=tf.train.global_step(sess, global_step))
 
 
-        start_epoch_inc.op.run()
-        # print(start_epoch.eval())
-        # save the model at end of each epoch training
-        print("{}: Saving checkpoint of epoch {} at {}...".format(datetime.datetime.now(),epoch+1,f.checkpoint_dir))
+        start_iteration_inc.op.run()
+        # print(start_iteration.eval())
+        # save the model at end of each iteration training
+        print("{}: Saving checkpoint of iteration {} at {}...".format(datetime.datetime.now(),iteration+1,f.checkpoint_dir))
         if not (os.path.exists(f.checkpoint_dir)):
             os.makedirs(f.checkpoint_dir,exist_ok=True)
         saver.save(sess, checkpoint_prefix, 
@@ -317,7 +316,7 @@ with tf.Graph().as_default():
         print("{}: Saving checkpoint succeed".format(datetime.datetime.now()))
             
         # testing phase
-        print("{}: Training of epoch {} finishes, testing start".format(datetime.datetime.now(),epoch+1))
+        print("{}: Training of iteration {} finishes, testing start".format(datetime.datetime.now(),iteration+1))
                 
         model.is_training = False
 
