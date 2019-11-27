@@ -142,21 +142,25 @@ with tf.Graph().as_default():
     
     global_step = tf.train.get_or_create_global_step()
 
-    # Dictionary for sampling
-    params = {f.params[i]: f.params[i + 1] for i in range(0, len(f.params), 2)}
+    # Data
+    with tf.name_scope("data"):
+        # dictionary for sampling
+        params = {f.params[i]: f.params[i + 1] for i in range(0, len(f.params), 2)}
 
-    training_data = ThreadedDataSetCollection(f.w, f.p, f.data_location, f.train_folder, f.files, f.masks, f.nclasses, params)
-    test_data = ThreadedDataSetCollection(f.w, f.p, f.data_location, f.test_folder, f.files, f.masks, f.nclasses)
+        training_data = ThreadedDataSetCollection(f.w, f.p, f.data_location, f.train_folder, f.files, f.masks, f.nclasses, params)
+        test_data = ThreadedDataSetCollection(f.w, f.p, f.data_location, f.test_folder, f.files, f.masks, f.nclasses)
 
-    input_batch_shape = training_data.get_shape()
-    output_batch_shape = training_data.get_target_shape()
-    
-    images_placeholder, labels_placeholder = placeholder_inputs(input_batch_shape, output_batch_shape)
+        input_batch_shape = training_data.get_shape()
+        output_batch_shape = training_data.get_target_shape()
+        
+        images_placeholder, labels_placeholder = placeholder_inputs(input_batch_shape, output_batch_shape)
 
+
+    # Model
     with tf.name_scope("vnet"):
         model = VNet(
-                num_classes=f.nclasses, # binary for 2
-                keep_prob=f.drop_out, # default 1
+                num_classes=f.nclasses, # 2 for binary
+                keep_prob=f.drop_out, # default 1.0
                 num_channels=16, # default 16 
                 num_levels=4,  # default 4
                 num_convolutions=(1,2,3,3), # default (1,2,3,3), size should equal to num_levels
@@ -169,6 +173,7 @@ with tf.Graph().as_default():
     # Softmax to generate label from logits
     with tf.name_scope("predicted_label"):
         pred = tf.nn.softmax(logits) # (n_batches, nx, nz, nz, n_classes)
+
 
     # Learning rate
     with tf.name_scope("learning_rate"):
@@ -191,10 +196,10 @@ with tf.Graph().as_default():
 
     # Metrics
     with tf.name_scope("metrics"):
-        tp, tp_op = tf.metrics.true_positives(labels_placeholder, pred, name="true_positives")
-        tn, tn_op = tf.metrics.true_negatives(labels_placeholder, pred, name="true_negatives")
-        fp, fp_op = tf.metrics.false_positives(labels_placeholder, pred, name="false_positives")
-        fn, fn_op = tf.metrics.false_negatives(labels_placeholder, pred, name="false_negatives")
+        tp, tp_op = tf.metrics.true_positives(labels_placeholder, tf.round(pred), name="true_positives")
+        tn, tn_op = tf.metrics.true_negatives(labels_placeholder, tf.round(pred), name="true_negatives")
+        fp, fp_op = tf.metrics.false_positives(labels_placeholder, tf.round(pred), name="false_positives")
+        fn, fn_op = tf.metrics.false_negatives(labels_placeholder, tf.round(pred), name="false_negatives")
         sensitivity_op = tf.divide(tf.cast(tp_op,tf.float32),tf.cast(tf.add(tp_op,fn_op),tf.float32))
         specificity_op = tf.divide(tf.cast(tn_op,tf.float32),tf.cast(tf.add(tn_op,fp_op),tf.float32))
         dice_op = 2.*tp_op/(2.*tp_op+fp_op+fn_op)
@@ -222,7 +227,7 @@ with tf.Graph().as_default():
 
         train_op = optimizer.minimize(loss=loss_op, global_step=global_step)
 
-        # the update op is required by batch norm layer
+        # Update op is required by batch norm layer
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         train_op = tf.group([train_op, update_ops])
 
@@ -275,7 +280,7 @@ with tf.Graph().as_default():
             image, label = training_data.random_sample()
             train, summary, loss = sess.run([train_op, summary_op, loss_op], feed_dict={images_placeholder: image, labels_placeholder: label})
             train_summary_writer.add_summary(summary, global_step=tf.train.global_step(sess, global_step))
-            #print('{}: Training loss: {}'.format(datetime.datetime.now(), str(loss)))
+            print('{}: Training loss: {}'.format(datetime.datetime.now(), str(loss)))
 
             if ((iteration+1) % f.test_each) == 0:
 
