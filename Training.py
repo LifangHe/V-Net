@@ -172,7 +172,7 @@ with tf.Graph().as_default():
 
     # Softmax to generate label from logits
     with tf.name_scope("predicted_label"):
-        pred = tf.nn.softmax(logits) # (n_batches, nx, nz, nz, n_classes)
+        pred = tf.nn.softmax(logits, name="prediction") # (n_batches, nx, nz, nz, n_classes)
 
 
     # Learning rate
@@ -241,7 +241,7 @@ with tf.Graph().as_default():
     summary_op = tf.summary.merge_all()
     checkpoint_prefix = os.path.join(f.checkpoint_dir ,"checkpoint")
     print("Setting up Saver...")
-    saver = tf.train.Saver(keep_checkpoint_every_n_hours=1)
+    saver = tf.train.Saver(keep_checkpoint_every_n_hours=2)
 
 
     config = tf.ConfigProto()
@@ -282,10 +282,11 @@ with tf.Graph().as_default():
             train, summary, loss = sess.run([train_op, summary_op, loss_op], feed_dict={images_placeholder: image, labels_placeholder: label})
             train_summary_writer.add_summary(summary, global_step=tf.train.global_step(sess, global_step))
 
-            if ((iteration+1) % f.test_each) == 0:
+            # testing phase
+            if (iteration % (f.test_each-1)) == 0:
 
-                batches = test_data.get_volume_batch_generators()
                 model.is_training = False
+                batches = test_data.get_volume_batch_generators()
                 for batch, file, shape, w, p in batches:
                     for image, label, imin, imax in batch:
                         summary, loss = sess.run([summary_op, loss_op], feed_dict={images_placeholder: image, labels_placeholder: label})
