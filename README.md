@@ -33,7 +33,7 @@ Here is an example graph of network this code implements. Channel depth may chan
 ### Required Libraries
 
 - Python 3.5
-- Tensorflow 1.8 or above
+- TensorFlow 1.8
 - Nibabel
 - mvloader
 
