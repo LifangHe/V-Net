@@ -45,9 +45,9 @@ tf.app.flags.DEFINE_string('log_dir', './tmp/log',
     """Directory where to write training and testing event logs """)
 tf.app.flags.DEFINE_float('init_learning_rate',1e-2,
     """Initial learning rate""")
-tf.app.flags.DEFINE_float('decay_factor',0.01,
+tf.app.flags.DEFINE_float('decay_factor',0.99,
     """Exponential decay learning rate factor""")
-tf.app.flags.DEFINE_integer('decay_steps',100,
+tf.app.flags.DEFINE_integer('decay_steps',500,
     """Number of iterations before applying one learning rate decay""")
 tf.app.flags.DEFINE_integer('display_step',1000,
     """Display and logging interval (train steps)""")
@@ -93,7 +93,7 @@ def placeholder_inputs(input_batch_shape, output_batch_shape):
     return images_placeholder, labels_placeholder
 
 
-def dice_coe(output, target, loss_type='jaccard', axis=(1, 2, 3, 4), smooth=1e-5):
+def dice_coe(output, target, loss_type='jaccard', axis=[1, 2, 3, 4], smooth=1e-5):
 
     """Soft dice (Sørensen or Jaccard) coefficient for comparing the similarity
     of two batch of data, usually be used for binary image segmentation
@@ -136,13 +136,13 @@ def dice_coe(output, target, loss_type='jaccard', axis=(1, 2, 3, 4), smooth=1e-5
     return dice
 
 
-"""Train the Vnet model"""
+"""Train the V-Net model"""
 
 with tf.Graph().as_default():
     
     global_step = tf.train.get_or_create_global_step()
 
-    # dictionary for sampling
+    # Dictionary for sampling
     params = {f.params[i]: f.params[i + 1] for i in range(0, len(f.params), 2)}
 
     training_data = ThreadedDataSetCollection(f.w, f.p, f.data_location, f.train_folder, f.files, f.masks, f.nclasses, params)
@@ -165,40 +165,29 @@ with tf.Graph().as_default():
 
         logits = model.network_fn(images_placeholder) # (n_batches, nx, nz, nz, n_classes)
 
-    with tf.name_scope("learning_rate"):
-        learning_rate = f.init_learning_rate
-    tf.summary.scalar('learning_rate', learning_rate)
 
-
-    with tf.name_scope("cross_entropy"):
-        loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(
-            logits=logits,
-            labels=labels_placeholder)) # (n_batches, nx, ny, nz) -> ()
-    tf.summary.scalar('loss',loss_op)
-
-
-    # Argmax Op to generate label from logits
+    # Softmax to generate label from logits
     with tf.name_scope("predicted_label"):
         pred = tf.nn.softmax(logits) # (n_batches, nx, nz, nz, n_classes)
 
+    # Learning rate
+    with tf.name_scope("learning_rate"):
+        learning_rate = tf.train.exponential_decay(f.init_learning_rate, global_step, 
+            f.decay_steps, f.decay_factor, staircase=False)
+    tf.summary.scalar('learning_rate', learning_rate)
 
-    # Accuracy of model
-    with tf.name_scope("accuracy"):
-        correct_pred = tf.equal(tf.cast(tf.round(pred),dtype=tf.int64), tf.cast(labels_placeholder,dtype=tf.int64))
-        accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
-    tf.summary.scalar('accuracy', accuracy)
 
+    # Loss
+    with tf.name_scope("loss"):
+        loss_function = f.loss_function
+        if (loss_function == "xent"):
+            loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits,labels=labels_placeholder)) # (n_batches, nx, ny, nz) -> ()
+        elif (loss_function == "sorensen"):
+            loss_op = 1.0-dice_coe(pred,tf.cast(labels_placeholder,dtype=tf.float32), loss_type='sorensen')
+        elif (loss_function == "jaccard"):
+            loss_op = 1.0-dice_coe(pred,tf.cast(labels_placeholder,dtype=tf.float32), loss_type='jaccard')
+    tf.summary.scalar('loss',loss_op)
 
-    # Dice Similarity, currently only for binary segmentation
-    with tf.name_scope("dice"):
-        sorensen = dice_coe(pred,tf.cast(labels_placeholder,dtype=tf.float32), loss_type='sorensen')        
-        jaccard = dice_coe(pred,tf.cast(labels_placeholder,dtype=tf.float32), loss_type='jaccard')
-        sorensen_loss = 1. - sorensen
-        jaccard_loss = 1. - jaccard
-    tf.summary.scalar('sorensen', sorensen)
-    tf.summary.scalar('jaccard', jaccard)
-    tf.summary.scalar('sorensen_loss', sorensen_loss)
-    tf.summary.scalar('jaccard_loss',jaccard_loss)
 
     # Metrics
     with tf.name_scope("metrics"):
@@ -209,41 +198,33 @@ with tf.Graph().as_default():
         sensitivity_op = tf.divide(tf.cast(tp_op,tf.float32),tf.cast(tf.add(tp_op,fn_op),tf.float32))
         specificity_op = tf.divide(tf.cast(tn_op,tf.float32),tf.cast(tf.add(tn_op,fp_op),tf.float32))
         dice_op = 2.*tp_op/(2.*tp_op+fp_op+fn_op)
+        correct_pred = tf.equal(tf.cast(tf.round(pred),dtype=tf.int64), tf.cast(labels_placeholder,dtype=tf.int64))
+        accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+    tf.summary.scalar('accuracy', accuracy)
     tf.summary.scalar('sensitivity', sensitivity_op)
     tf.summary.scalar('specificity', specificity_op)
     tf.summary.scalar('dice', dice_op)
+
 
     # Training Op
     with tf.name_scope("training"):
         # optimizer
         optimizer = f.optimizer
-        init_learning_rate = f.init_learning_rate
         momentum = f.momentum
         if optimizer == "sgd":
-            optimizer = tf.train.GradientDescentOptimizer(learning_rate=init_learning_rate)
+            optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
         elif optimizer == "adam":
-            optimizer = tf.train.AdamOptimizer(learning_rate=init_learning_rate)
+            optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
         elif optimizer == "momentum":
-            optimizer = tf.train.MomentumOptimizer(learning_rate=init_learning_rate, momentum=momentum)
+            optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=momentum)
         elif optimizer == "nesterov_momentum":
-            optimizer = tf.train.MomentumOptimizer(learning_rate=init_learning_rate, momentum=momentum, use_nesterov=True)
-        else:
-            sys.exit("Invalid optimizer")
+            optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=momentum, use_nesterov=True)
 
-        # loss function
-        loss_function = f.loss_function
-        if (loss_function == "xent"):
-            loss_fn = loss_op
-        elif(loss_function == "sorensen"):
-            loss_fn = sorensen_loss
-        elif(loss_function == "jaccard"):
-            loss_fn = jaccard_loss
-        else:
-            sys.exit("Invalid loss function")
+        train_op = optimizer.minimize(loss=loss_op, global_step=global_step)
 
-        train_op = optimizer.minimize(
-            loss = loss_fn,
-            global_step=global_step)
+        # the update op is required by batch norm layer
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        train_op = tf.group([train_op, update_ops])
 
 
     # # iteration checkpoint manipulation
@@ -256,6 +237,7 @@ with tf.Graph().as_default():
     checkpoint_prefix = os.path.join(f.checkpoint_dir ,"checkpoint")
     print("Setting up Saver...")
     saver = tf.train.Saver(keep_checkpoint_every_n_hours=1)
+
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
@@ -300,7 +282,7 @@ with tf.Graph().as_default():
                 model.is_training = False
                 for batch, file, shape, w, p in batches:
                     for image, label, imin, imax in batch:
-                        loss, summary = sess.run([loss_op, summary_op], feed_dict={images_placeholder: image, labels_placeholder: label})
+                        summary, loss = sess.run([summary_op, loss_op], feed_dict={images_placeholder: image, labels_placeholder: label})
                         test_summary_writer.add_summary(summary, global_step=tf.train.global_step(sess, global_step))
 
 
@@ -324,7 +306,7 @@ with tf.Graph().as_default():
 
         for batch, file, shape, w, p in batches:
             for image, label, imin, imax in batch:
-                loss, summary = sess.run([loss_op, summary_op], feed_dict={images_placeholder: image, labels_placeholder: label})
+                summary, loss = sess.run([summary_op, loss_op], feed_dict={images_placeholder: image, labels_placeholder: label})
                 test_summary_writer.add_summary(summary, global_step=tf.train.global_step(sess, global_step))
 
 
