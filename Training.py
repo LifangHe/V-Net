@@ -268,10 +268,11 @@ with tf.Graph().as_default():
                 latest_checkpoint_path = tf.train.latest_checkpoint(f.checkpoint_dir,latest_filename="checkpoint-latest")
                 saver.restore(sess, latest_checkpoint_path)
         
-        print("{}: Last checkpoint iteration: {}".format(datetime.datetime.now(),start_iteration.eval()[0]))
-        print("{}: Last checkpoint global step: {}".format(datetime.datetime.now(),tf.train.global_step(sess, global_step)))
+            print("{}: Last checkpoint iteration: {}".format(datetime.datetime.now(),start_iteration.eval()[0]))
+            print("{}: Last checkpoint global step: {}".format(datetime.datetime.now(),tf.train.global_step(sess, global_step)))
 
-        # loop over iterations
+
+        # Loop over iterations
         for iteration in np.arange(start_iteration.eval(), f.iterations):
             print("{}: iteration {} starts.".format(datetime.datetime.now(),iteration+1))
 
