@@ -93,7 +93,7 @@ def placeholder_inputs(input_batch_shape, output_batch_shape):
     return images_placeholder, labels_placeholder
 
 
-def dice_coe(output, target, loss_type='jaccard', axis=[1, 2, 3, 4], smooth=1e-5):
+def dice_coe(output, target, loss_type='jaccard', axis=[1, 2, 3], smooth=1e-5):
 
     """Soft dice (Sørensen or Jaccard) coefficient for comparing the similarity
     of two batch of data, usually be used for binary image segmentation
@@ -196,14 +196,14 @@ with tf.Graph().as_default():
 
     # Metrics
     with tf.name_scope("metrics"):
-        tp, tp_op = tf.metrics.true_positives(labels_placeholder, tf.round(pred), name="true_positives")
-        tn, tn_op = tf.metrics.true_negatives(labels_placeholder, tf.round(pred), name="true_negatives")
-        fp, fp_op = tf.metrics.false_positives(labels_placeholder, tf.round(pred), name="false_positives")
-        fn, fn_op = tf.metrics.false_negatives(labels_placeholder, tf.round(pred), name="false_negatives")
+        tp, tp_op = tf.metrics.true_positives(labels_placeholder[...,-1], tf.round(pred)[...,-1], name="true_positives")
+        tn, tn_op = tf.metrics.true_negatives(labels_placeholder[...,-1], tf.round(pred)[...,-1], name="true_negatives")
+        fp, fp_op = tf.metrics.false_positives(labels_placeholder[...,-1], tf.round(pred)[...,-1], name="false_positives")
+        fn, fn_op = tf.metrics.false_negatives(labels_placeholder[...,-1], tf.round(pred)[...,-1], name="false_negatives")
         sensitivity_op = tf.divide(tf.cast(tp_op,tf.float32),tf.cast(tf.add(tp_op,fn_op),tf.float32))
         specificity_op = tf.divide(tf.cast(tn_op,tf.float32),tf.cast(tf.add(tn_op,fp_op),tf.float32))
         dice_op = 2.*tp_op/(2.*tp_op+fp_op+fn_op)
-        correct_pred = tf.equal(tf.cast(tf.round(pred),dtype=tf.int64), tf.cast(labels_placeholder,dtype=tf.int64))
+        correct_pred = tf.equal(tf.cast(tf.round(pred)[...,-1],dtype=tf.int64), tf.cast(labels_placeholder[...,-1],dtype=tf.int64))
         accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     tf.summary.scalar('accuracy', accuracy)
     tf.summary.scalar('sensitivity', sensitivity_op)
